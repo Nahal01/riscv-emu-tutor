@@ -174,6 +174,17 @@ we can run qemu with new DTB file as follows:
 /usr/bin/qemu-system-riscv64 -machine virt -m 4G -smp cpus=2 -nographic     -bios /usr/lib/riscv64-linux-gnu/opensbi/generic/fw_jump.bin     -kernel /usr/lib/u-boot/qemu-riscv64_smode/u-boot.bin     -netdev type=user,id=net0     -device virtio-net-device,netdev=net0     -drive file=disk,format=raw,if=virtio     -device virtio-rng-pci -dtb qemu-ext.dtb
 ```
 
+To verify that our device tree node is loaded properly, run:
+
+```
+ls -l /proc/device-tree/soc/regsblk@10009000/
+total 0
+-r--r--r-- 1 root root 15 Apr 15 09:23 compatible
+-r--r--r-- 1 root root  8 Apr 15 09:23 name
+-r--r--r-- 1 root root  4 Apr 15 09:23 num-registers
+-r--r--r-- 1 root root 16 Apr 15 09:23 reg
+```
+
 Inside guest OS, go to `/regsblk` folder and run `make` to build the driver. To load the driver, run:
 
 ``` sudo insmod regsblk.ko```
@@ -189,7 +200,7 @@ To verify that the driver is loaded we can run `sudo dmeg | grep regsblk`:
 In order to test the driver, `test_regsblk_rw` application is developed which allows access to the registers. 
 To make test application, run:
 
-``` gcc test_regsblk_rw.c -o test_regsblk_rw``
+``` gcc test_regsblk_rw.c -o test_regsblk_rw```
 
 Sample test output:
 
