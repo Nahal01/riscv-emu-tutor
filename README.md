@@ -142,12 +142,67 @@ main:
 which verifies that the program is compiled for RISC-V target (i.e. a0-a31 registers, .attribute arch field)
 
 ## device drivers and tree
+Herein, we're trying to add a simple device driver along with its device tree and pass it to qemu. The device tree is supposed to have some configurations for our custom device driver (i.e. register base address and range). The source codes are under `regsblk` folder.
+
+The goal is to develop a new linux device driver, called `regsblk`, which has a few 32-bits registers that user application can get access to (i.e. read/write). the registers are mapped into the host memory. the number of registers are obtained through a device tree node.
+
 Since the qemu is running a virtual system, all the peripherals are virtual (like `virtio`). Nonetheless, we can peek at device tree source by 
 
 ``` aaa@aaa:~$ dtc -s -I fs /proc/device-tree -O dts ```
 
 The output of the above command is in `dts.txt`.
 
-Device tree is part of the linux kernel and is compiled and packaged along with linux image. However, we can add a device treee with `-dts` option of qemu
-to overlay the existing one in the kernel. Herein, we're trying to add a simple device driver along with its device tree and pass it to qemu. The device tree is supposed to have some configurations for our custom device driver (i.e. register base address and range).
-The device driver can be loaded using `modprobe`.
+The following code snippet (i.e. device tree node for our driver) is added to `dts.txt` and is stored into `dts-ext.txt`
+
+```
+		regsblk@10009000 {
+			compatible = "myfwco,regsblk";
+			reg = <0x00 0x10009000 0x00 0x1000>; // Base address and size
+			num-registers = <16>;      // Number of 32-bit registers
+		};
+```
+
+Device tree is part of the linux kernel and is compiled and packaged along with linux image. However, we can add a device tree with `-dtb` option of qemu
+to overlay the existing one in the kernel. 
+
+use this command to compile device tree source into binary format (Device Tree Blob):
+
+```dtc -I dts dts-ext.txt > qemu-ext.dtb```
+
+we can run qemu with new DTB file as follows:
+```
+/usr/bin/qemu-system-riscv64 -machine virt -m 4G -smp cpus=2 -nographic     -bios /usr/lib/riscv64-linux-gnu/opensbi/generic/fw_jump.bin     -kernel /usr/lib/u-boot/qemu-riscv64_smode/u-boot.bin     -netdev type=user,id=net0     -device virtio-net-device,netdev=net0     -drive file=disk,format=raw,if=virtio     -device virtio-rng-pci -dtb qemu-ext.dtb
+```
+
+Inside guest OS, go to `/regsblk` folder and run `make` to build the driver. To load the driver, run:
+
+``` sudo insmod regsblk.ko```
+
+To verify that the driver is loaded we can run `sudo dmeg | grep regsblk`:
+
+```
+[  348.287048] regsblk: loading out-of-tree module taints kernel.
+[  348.290327] regsblk: module verification failed: signature and/or required key missing - tainting kernel
+[  348.323591] regsblk 10009000.regsblk: regsblk device initialized
+```
+
+In order to test the driver, `test_regsblk_rw` application is developed which allows access to the registers. 
+To make test application, run:
+
+``` gcc test_regsblk_rw.c -o test_regsblk_rw``
+
+Sample test output:
+
+```
+aaa@aaa:~/regsblk$ sudo ./test_regsblk_rw -a 0x5 -v 0xdeadbeef
+Writing Register 0x00000005: 0xdeadbeef
+aaa@aaa:~/regsblk$ sudo ./test_regsblk_rw -a 0x1
+Reading Register 0x00000001: 0x00000000
+aaa@aaa:~/regsblk$ sudo ./test_regsblk_rw -a 0x5
+Reading Register 0x00000005: 0xdeadbeef
+aaa@aaa:~/regsblk$ sudo ./test_regsblk_rw -a 0x11
+out of range address 0x00000011
+lseek: Invalid argument
+```
+
+NOTE : since `num-registers` is configured as 16, the last test failed as we're trying to get access to address 0x11 (=17) which is out of range

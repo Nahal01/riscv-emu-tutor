@@ -1,0 +1,261 @@
+/dts-v1/;
+
+/ {
+	#address-cells = <0x02>;
+	#size-cells = <0x02>;
+	compatible = "riscv-virtio";
+	model = "riscv-virtio,qemu";
+
+	chosen {
+		boot-hartid = <0x00>;
+		bootargs = "BOOT_IMAGE=/boot/vmlinuz-6.14.0-13-generic root=UUID=9a65e850-6c28-49b1-be26-3ed5a74c676f ro crashkernel=2G-4G:320M,4G-32G:512M,32G-64G:1024M,64G-128G:2048M,128G-:4096M";
+		kaslr-seed = <0x00 0x00>;
+		linux,uefi-mmap-desc-size = <0x28>;
+		linux,uefi-mmap-desc-ver = <0x01>;
+		linux,uefi-mmap-size = <0x640>;
+		linux,uefi-mmap-start = <0x01 0x785e2068>;
+		linux,uefi-secure-boot = <0x02>;
+		linux,uefi-system-table = <0x01 0x7f73ad40>;
+		stdout-path = "/soc/serial@10000000";
+		u-boot,version = "2024.01+dfsg-1ubuntu5.1";
+	};
+
+	cpus {
+		#address-cells = <0x01>;
+		#size-cells = <0x00>;
+		timebase-frequency = <0x989680>;
+
+		cpu-map {
+
+			cluster0 {
+
+				core0 {
+					cpu = <0x03>;
+				};
+
+				core1 {
+					cpu = <0x01>;
+				};
+			};
+		};
+
+		cpu@0 {
+			compatible = "riscv";
+			device_type = "cpu";
+			mmu-type = "riscv,sv57";
+			phandle = <0x03>;
+			reg = <0x00>;
+			riscv,cbom-block-size = <0x40>;
+			riscv,cboz-block-size = <0x40>;
+			riscv,isa = "rv64imafdch_zicbom_zicboz_zicntr_zicsr_zifencei_zihintntl_zihintpause_zihpm_zawrs_zfa_zca_zcd_zba_zbb_zbc_zbs_sstc_svadu";
+			status = "okay";
+
+			interrupt-controller {
+				#interrupt-cells = <0x01>;
+				compatible = "riscv,cpu-intc";
+				interrupt-controller;
+				phandle = <0x04>;
+			};
+		};
+
+		cpu@1 {
+			compatible = "riscv";
+			device_type = "cpu";
+			mmu-type = "riscv,sv57";
+			phandle = <0x01>;
+			reg = <0x01>;
+			riscv,cbom-block-size = <0x40>;
+			riscv,cboz-block-size = <0x40>;
+			riscv,isa = "rv64imafdch_zicbom_zicboz_zicntr_zicsr_zifencei_zihintntl_zihintpause_zihpm_zawrs_zfa_zca_zcd_zba_zbb_zbc_zbs_sstc_svadu";
+			status = "okay";
+
+			interrupt-controller {
+				#interrupt-cells = <0x01>;
+				compatible = "riscv,cpu-intc";
+				interrupt-controller;
+				phandle = <0x02>;
+			};
+		};
+	};
+
+	flash@20000000 {
+		bank-width = <0x04>;
+		compatible = "cfi-flash";
+		reg = <0x00 0x20000000 0x00 0x2000000 0x00 0x22000000 0x00 0x2000000>;
+	};
+
+	fw-cfg@10100000 {
+		compatible = "qemu,fw-cfg-mmio";
+		dma-coherent;
+		reg = <0x00 0x10100000 0x00 0x18>;
+	};
+
+	memory@80000000 {
+		device_type = "memory";
+		reg = <0x00 0x80000000 0x01 0x00>;
+	};
+
+	platform-bus@4000000 {
+		#address-cells = <0x01>;
+		#size-cells = <0x01>;
+		compatible = "qemu,platform", "simple-bus";
+		interrupt-parent = <0x05>;
+		ranges = <0x00 0x00 0x4000000 0x2000000>;
+	};
+
+	pmu {
+		compatible = "riscv,pmu";
+	};
+
+	poweroff {
+		compatible = "syscon-poweroff";
+		offset = <0x00>;
+		regmap = <0x06>;
+		value = <0x5555>;
+	};
+
+	reboot {
+		compatible = "syscon-reboot";
+		offset = <0x00>;
+		regmap = <0x06>;
+		value = <0x7777>;
+	};
+
+	reserved-memory {
+		#address-cells = <0x02>;
+		#size-cells = <0x02>;
+		ranges;
+
+		mmode_resv0@80040000 {
+			no-map;
+			reg = <0x00 0x80040000 0x00 0x20000>;
+		};
+
+		mmode_resv1@80000000 {
+			no-map;
+			reg = <0x00 0x80000000 0x00 0x40000>;
+		};
+	};
+
+	soc {
+		#address-cells = <0x02>;
+		#size-cells = <0x02>;
+		compatible = "simple-bus";
+		ranges;
+
+		clint@2000000 {
+			compatible = "sifive,clint0", "riscv,clint0";
+			interrupts-extended = <0x04 0x03 0x04 0x07 0x02 0x03 0x02 0x07>;
+			reg = <0x00 0x2000000 0x00 0x10000>;
+		};
+
+		pci@30000000 {
+			#address-cells = <0x03>;
+			#interrupt-cells = <0x01>;
+			#size-cells = <0x02>;
+			bus-range = <0x00 0xff>;
+			compatible = "pci-host-ecam-generic";
+			device_type = "pci";
+			dma-coherent;
+			interrupt-map = <0x00 0x00 0x00 0x01 0x05 0x20 0x00 0x00 0x00 0x02 0x05 0x21 0x00 0x00 0x00 0x03 0x05 0x22 0x00 0x00 0x00 0x04 0x05 0x23 0x800 0x00 0x00 0x01 0x05 0x21 0x800 0x00 0x00 0x02 0x05 0x22 0x800 0x00 0x00 0x03 0x05 0x23 0x800 0x00 0x00 0x04 0x05 0x20 0x1000 0x00 0x00 0x01 0x05 0x22 0x1000 0x00 0x00 0x02 0x05 0x23 0x1000 0x00 0x00 0x03 0x05 0x20 0x1000 0x00 0x00 0x04 0x05 0x21 0x1800 0x00 0x00 0x01 0x05 0x23 0x1800 0x00 0x00 0x02 0x05 0x20 0x1800 0x00 0x00 0x03 0x05 0x21 0x1800 0x00 0x00 0x04 0x05 0x22>;
+			interrupt-map-mask = <0x1800 0x00 0x00 0x07>;
+			linux,pci-domain = <0x00>;
+			ranges = <0x1000000 0x00 0x00 0x00 0x3000000 0x00 0x10000 0x2000000 0x00 0x40000000 0x00 0x40000000 0x00 0x40000000 0x3000000 0x04 0x00 0x04 0x00 0x04 0x00>;
+			reg = <0x00 0x30000000 0x00 0x10000000>;
+		};
+
+		plic@c000000 {
+			#address-cells = <0x00>;
+			#interrupt-cells = <0x01>;
+			compatible = "sifive,plic-1.0.0", "riscv,plic0";
+			interrupt-controller;
+			interrupts-extended = <0x04 0xffffffff 0x04 0x09 0x02 0xffffffff 0x02 0x09>;
+			phandle = <0x05>;
+			reg = <0x00 0xc000000 0x00 0x600000>;
+			riscv,ndev = <0x5f>;
+		};
+
+		rtc@101000 {
+			compatible = "google,goldfish-rtc";
+			interrupt-parent = <0x05>;
+			interrupts = <0x0b>;
+			reg = <0x00 0x101000 0x00 0x1000>;
+		};
+
+		serial@10000000 {
+			clock-frequency = "", "8@";
+			compatible = "ns16550a";
+			interrupt-parent = <0x05>;
+			interrupts = <0x0a>;
+			reg = <0x00 0x10000000 0x00 0x100>;
+		};
+
+		test@100000 {
+			compatible = "sifive,test1", "sifive,test0", "syscon";
+			phandle = <0x06>;
+			reg = <0x00 0x100000 0x00 0x1000>;
+		};
+
+		virtio_mmio@10001000 {
+			compatible = "virtio,mmio";
+			interrupt-parent = <0x05>;
+			interrupts = <0x01>;
+			reg = <0x00 0x10001000 0x00 0x1000>;
+		};
+
+		virtio_mmio@10002000 {
+			compatible = "virtio,mmio";
+			interrupt-parent = <0x05>;
+			interrupts = <0x02>;
+			reg = <0x00 0x10002000 0x00 0x1000>;
+		};
+
+		virtio_mmio@10003000 {
+			compatible = "virtio,mmio";
+			interrupt-parent = <0x05>;
+			interrupts = <0x03>;
+			reg = <0x00 0x10003000 0x00 0x1000>;
+		};
+
+		virtio_mmio@10004000 {
+			compatible = "virtio,mmio";
+			interrupt-parent = <0x05>;
+			interrupts = <0x04>;
+			reg = <0x00 0x10004000 0x00 0x1000>;
+		};
+
+		virtio_mmio@10005000 {
+			compatible = "virtio,mmio";
+			interrupt-parent = <0x05>;
+			interrupts = <0x05>;
+			reg = <0x00 0x10005000 0x00 0x1000>;
+		};
+
+		virtio_mmio@10006000 {
+			compatible = "virtio,mmio";
+			interrupt-parent = <0x05>;
+			interrupts = <0x06>;
+			reg = <0x00 0x10006000 0x00 0x1000>;
+		};
+
+		virtio_mmio@10007000 {
+			compatible = "virtio,mmio";
+			interrupt-parent = <0x05>;
+			interrupts = <0x07>;
+			reg = <0x00 0x10007000 0x00 0x1000>;
+		};
+
+		virtio_mmio@10008000 {
+			compatible = "virtio,mmio";
+			interrupt-parent = <0x05>;
+			interrupts = <0x08>;
+			reg = <0x00 0x10008000 0x00 0x1000>;
+		};
+		
+		regsblk@10009000 {
+			compatible = "myfwco,regsblk";
+			reg = <0x00 0x10009000 0x00 0x1000>; // Base address and size
+			num-registers = <16>;      // Number of 32-bit registers
+		};		
+	};
+};
