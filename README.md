@@ -35,18 +35,21 @@ To Install linux on `disk` file run:
     -device virtio-net-device,netdev=net0 \
     -drive file=jammy-live-server-riscv64.img,format=raw,if=virtio \
     -drive file=disk,format=raw,if=virtio \
-    -device virtio-rng-pci```
+    -device virtio-rng-pci
+```
 
 After installation is completed, we can bring up linux as the guest OS by qemu:
 
 ```
-/usr/bin/qemu-system-riscv64 -machine virt -m 4G -smp cpus=2 -nographic     -bios /usr/lib/riscv64-linux-gnu/opensbi/generic/fw_jump.bin     -kernel /usr/lib/u-boot/qemu-riscv64_smode/u-boot.bin     -netdev type=user,id=net0     -device virtio-net-device,netdev=net0     -drive file=disk,format=raw,if=virtio     -device virtio-rng-pci```
+/usr/bin/qemu-system-riscv64 -machine virt -m 4G -smp cpus=2 -nographic     -bios /usr/lib/riscv64-linux-gnu/opensbi/generic/fw_jump.bin     -kernel /usr/lib/u-boot/qemu-riscv64_smode/u-boot.bin     -netdev type=user,id=net0     -device virtio-net-device,netdev=net0     -drive file=disk,format=raw,if=virtio     -device virtio-rng-pci
+```
 
 ## Basic sanity checks
 
 ```
 aaa@aaa:~$ uname -a
-Linux aaa 6.14.0-13-generic #13.2-Ubuntu SMP PREEMPT_DYNAMIC Sun Apr  6 05:26:54 UTC 2025 riscv64 riscv64 riscv64 GNU/Linux```
+Linux aaa 6.14.0-13-generic #13.2-Ubuntu SMP PREEMPT_DYNAMIC Sun Apr  6 05:26:54 UTC 2025 riscv64 riscv64 riscv64 GNU/Linux
+```
 
 ```
 aaa@aaa:~$ lscpu
@@ -60,7 +63,8 @@ Vendor ID:                0x0
     Model:                0x0
     Thread(s) per core:   1
     Core(s) per socket:   2
-    Socket(s):            1```
+    Socket(s):            1
+```
 
 ## Writing a simple program
 Herein, gcc is used to compile `hello-rv.c` into assembly:
