@@ -67,7 +67,7 @@ Vendor ID:                0x0
 ```
 
 ## Writing a simple program
-Herein, gcc is used to compile [hello-rv.c](./hello-rv.c)! into assembly:
+Herein, gcc is used to compile [hello-rv.c](./hello-rv.c) into assembly:
 
 ``` gcc hello-rv.c -S -o out.S ```
 
@@ -142,7 +142,7 @@ main:
 which verifies that the program is compiled for RISC-V target (i.e. a0-a31 registers, .attribute arch field)
 
 ## device drivers and device tree
-Herein, we're trying to add a simple device driver along with its device tree and pass it to qemu. The device tree is supposed to have some configurations for our custom device driver (i.e. register base address and range). The source codes are under [regsblk](./regsblk)! folder.
+Herein, we're trying to add a simple device driver along with its device tree and pass it to qemu. The device tree is supposed to have some configurations for our custom device driver (i.e. register base address and range). The source codes are under [regsblk](./regsblk) folder.
 
 The goal is to develop a new linux device driver, called `regsblk`, which has a few 32-bits registers that user application can get access to (i.e. read/write). the registers are mapped into the host memory. the number of registers are obtained through a device tree node.
 
@@ -150,9 +150,9 @@ Since the qemu is running a virtual system, all the peripherals are virtual (lik
 
 ``` aaa@aaa:~$ dtc -s -I fs /proc/device-tree -O dts ```
 
-The output of the above command is in [dts.txt](./dts.txt)!.
+The output of the above command is in [dts.txt](./dts.txt).
 
-The following code snippet (i.e. device tree node for our driver) is added to [dts.txt](./dts.txt)! and is stored into [dts-ext.txt](./regsblk/dts-ext.txt)!
+The following code snippet (i.e. device tree node for our driver) is added to [dts.txt](./dts.txt) and is stored into [dts-ext.txt](./regsblk/dts-ext.txt)
 
 ```
 		regsblk@10009000 {
@@ -197,7 +197,7 @@ To verify that the driver is loaded we can run `sudo dmeg | grep regsblk`:
 [  348.323591] regsblk 10009000.regsblk: regsblk device initialized
 ```
 
-In order to test the driver, [test_regsblk_rw.c](./regsblk/test_regsblk_rw.c)! application is developed which allows access to the registers. 
+In order to test the driver, [test_regsblk_rw.c](./regsblk/test_regsblk_rw.c) application is developed which allows access to the registers. 
 To make test application, run:
 
 ``` gcc test_regsblk_rw.c -o test_regsblk_rw```
@@ -242,4 +242,4 @@ reg[14] = 0x00000000
 reg[15] = 0x00000000
 ```
 
-To enable debugging, you must define `DEBUG_EN` macro in the [regsblk.c](./regsblk/regsblk.c)!
+To enable debugging, you must define `DEBUG_EN` macro in the [regsblk.c](./regsblk/regsblk.c)
