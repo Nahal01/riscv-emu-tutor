@@ -67,7 +67,7 @@ Vendor ID:                0x0
 ```
 
 ## Writing a simple program
-Herein, gcc is used to compile `hello-rv.c` into assembly:
+Herein, gcc is used to compile [hello-rv.c](./hello-rv.c)! into assembly:
 
 ``` gcc hello-rv.c -S -o out.S ```
 
@@ -141,8 +141,8 @@ main:
 
 which verifies that the program is compiled for RISC-V target (i.e. a0-a31 registers, .attribute arch field)
 
-## device drivers and tree
-Herein, we're trying to add a simple device driver along with its device tree and pass it to qemu. The device tree is supposed to have some configurations for our custom device driver (i.e. register base address and range). The source codes are under `regsblk` folder.
+## device drivers and device tree
+Herein, we're trying to add a simple device driver along with its device tree and pass it to qemu. The device tree is supposed to have some configurations for our custom device driver (i.e. register base address and range). The source codes are under [regsblk](./regsblk)! folder.
 
 The goal is to develop a new linux device driver, called `regsblk`, which has a few 32-bits registers that user application can get access to (i.e. read/write). the registers are mapped into the host memory. the number of registers are obtained through a device tree node.
 
@@ -150,9 +150,9 @@ Since the qemu is running a virtual system, all the peripherals are virtual (lik
 
 ``` aaa@aaa:~$ dtc -s -I fs /proc/device-tree -O dts ```
 
-The output of the above command is in `dts.txt`.
+The output of the above command is in [dts.txt](./dts.txt)!.
 
-The following code snippet (i.e. device tree node for our driver) is added to `dts.txt` and is stored into `dts-ext.txt`
+The following code snippet (i.e. device tree node for our driver) is added to [dts.txt](./dts.txt)! and is stored into [dts-ext.txt](./regsblk/dts-ext.txt)!
 
 ```
 		regsblk@10009000 {
@@ -197,7 +197,7 @@ To verify that the driver is loaded we can run `sudo dmeg | grep regsblk`:
 [  348.323591] regsblk 10009000.regsblk: regsblk device initialized
 ```
 
-In order to test the driver, `test_regsblk_rw` application is developed which allows access to the registers. 
+In order to test the driver, [test_regsblk_rw.c](./regsblk/test_regsblk_rw.c)! application is developed which allows access to the registers. 
 To make test application, run:
 
 ``` gcc test_regsblk_rw.c -o test_regsblk_rw```
@@ -217,3 +217,29 @@ lseek: Invalid argument
 ```
 
 NOTE : since `num-registers` is configured as 16, the last test failed as we're trying to get access to address 0x11 (=17) which is out of range
+
+## Adding debug endpoints (debugfs)
+In this experiment, we're using debugfs for debugging and dumpping information about the device driver. Herein, `registers` debug file is added through which
+current value of registers are dumpped. The debug file resides in `/sys/kernel/debug/regsblk/registers` and it can be accessed the same way as regular files access. For example:
+
+```
+cat /sys/kernel/debug/regsblk/registers
+reg[00] = 0x00000000
+reg[01] = 0x00001234
+reg[02] = 0x00001234
+reg[03] = 0x00000000
+reg[04] = 0x00000000
+reg[05] = 0x0abcd444
+reg[06] = 0x00000000
+reg[07] = 0x00000000
+reg[08] = 0x00000000
+reg[09] = 0x00000000
+reg[10] = 0x00000000
+reg[11] = 0x00000000
+reg[12] = 0x00000000
+reg[13] = 0x00000000
+reg[14] = 0x00000000
+reg[15] = 0x00000000
+```
+
+To enable debugging, you must define `DEBUG_EN` macro in the [regsblk.c](./regsblk/regsblk.c)!

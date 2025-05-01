@@ -6,6 +6,9 @@
 //
 //----------------------------------------------------------------------------------------------
 
+//adding debugfs for debugging
+#define DEBUG_EN
+
 #include <linux/module.h>
 #include <linux/platform_device.h>
 #include <linux/of.h>
@@ -13,6 +16,11 @@
 #include <linux/fs.h>
 #include <linux/uaccess.h>
 #include <linux/cdev.h>
+
+#ifdef DEBUG_EN
+#include <linux/debugfs.h>
+#include <linux/seq_file.h>
+#endif
 
 #define DEVICE_NAME "regsblk"
 
@@ -22,9 +30,40 @@ struct regsblk_dev {
     struct cdev cdev;
     dev_t devt;
     struct class *class;
+    #ifdef DEBUG_EN
+    struct dentry *debug_dir;
+    struct dentry *debug_file;
+    #endif
 };
 
 static struct regsblk_dev regsblk;
+
+#ifdef DEBUG_EN
+    static int regsblk_debug_show(struct seq_file *s, void *unused)
+    {
+        int i;
+        struct regsblk_dev *dev = s->private;
+
+        for (i = 0; i < dev->num_registers; i++) {
+            seq_printf(s, "reg[%02d] = 0x%08x\n", i, dev->registers[i]);
+        }
+
+        return 0;
+    }
+
+    static int regsblk_debug_open(struct inode *inode, struct file *file)
+    {
+        return single_open(file, regsblk_debug_show, inode->i_private);
+    }
+
+    static const struct file_operations regsblk_debug_fops = {
+        .owner = THIS_MODULE,
+        .open = regsblk_debug_open,
+        .read = seq_read,
+        .llseek = seq_lseek,
+        .release = single_release,
+    };    
+#endif
 
 static int regsblk_open(struct inode *inode, struct file *file)
 {
@@ -140,6 +179,22 @@ static int regsblk_probe(struct platform_device *pdev)
     dev_info(dev, "regsblk device initialized\n");
     return 0;
 
+    #ifdef DEBUG_EN
+        regsblk.debug_dir = debugfs_create_dir("regsblk", NULL);
+        if (!regsblk.debug_dir) {
+            dev_warn(dev, "Failed to create debugfs dir\n");
+        }
+        
+        regsblk.debug_file = debugfs_create_file(
+            "registers",
+            0444,
+            regsblk.debug_dir,
+            &regsblk,
+            &regsblk_debug_fops
+        );
+        dev_info(dev, "regsblk device debug mode is enabled\n");
+    #endif
+
 del_cdev:
     cdev_del(&regsblk.cdev);
 unregister_chrdev:
@@ -153,6 +208,9 @@ static void regsblk_remove(struct platform_device *pdev)
     class_destroy(regsblk.class);
     cdev_del(&regsblk.cdev);
     unregister_chrdev_region(regsblk.devt, 1);
+    #ifdef DEBUG_EN
+        debugfs_remove_recursive(regsblk.debug_dir);
+    #endif
 }
 
 static const struct of_device_id regsblk_of_match[] = {
